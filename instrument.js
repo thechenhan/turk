@@ -27,7 +27,7 @@ var longestKeyLength = 40;
 var keyWidth = 5;
 var keyThickness = 2;
 
-var numKeys = 88;
+var numKeys = 88; //按键数量 88键midi钢琴
 
 var keyRadius = 100;
 
@@ -121,11 +121,11 @@ function init() {
 }
 
 function fillScene() {
-  addCannon();
-  addLighting();
-  addKeys();
-  addBuckets();
-  addTubing();
+  addCannon(); //中间大的弹珠发射桶
+  addLighting(); //添加环境光
+  addKeys(); //添加按键
+  addBuckets(); //旁边一圈小的弹珠接受装置
+  addTubing(); //添加其他管子
 }
 
 function addLighting() {
@@ -312,6 +312,7 @@ function throwBallsToMusic() {
   var currTime = timeInSong + interpolatedTime;
 
   while (notes[0].time < currTime + ballHeadstart) {
+    //console.log(notes[0].note - MIDI.pianoKeyOffset);
     addBall(notes[0].note - MIDI.pianoKeyOffset);
     notes.splice(0, 1);
 

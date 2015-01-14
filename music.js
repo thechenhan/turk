@@ -1,17 +1,17 @@
 var startDelay = 6000;
 
-var notes = [];
-var start;
-var musicPlaying = false;
+var notes = []; //存储全部音符
+var start; //全局开始播放时间
+var musicPlaying = false; //flag标志全局是否正在播放音乐
 
-var player;
+var player; //全局midi播放器
 
 window.onload = function() {
   MIDI.loadPlugin(function() {
     console.log("Sound being generated with " + MIDI.lang + ".");
     
     if (window.location.hash === '#' || window.location.hash === '') {
-      switchTo('tracks/157-Rachmaninov - Flight of the Bumblebee');
+      //switchTo('tracks/157-Rachmaninov - Flight of the Bumblebee');
     }
   }, "soundfont/acoustic_grand_piano-mp3.js");
 }
@@ -30,7 +30,7 @@ function switchTo(file) {
 
   player.stop();
   musicPlaying = false;
-  notes = [];
+  notes = []; //音符数组
   timeInSong = -startDelay;
   lastUpdatedTime = null;
 
@@ -39,6 +39,9 @@ function switchTo(file) {
 
     currentTime = 0;
 
+    //扫描所有midi文件音符
+    //MIDI文件每个因为分为interval持续时间以及 event。event包含其类型subtype，以及参数，noteNumber猜想应该是其音高
+    //最终生成的notes数组 包含，第x秒，为第几个音符或为何种音频。
     for (var i = 0; i < midiData.length; i++) {
       midiDatum = midiData[i];
 
@@ -58,6 +61,7 @@ function switchTo(file) {
 
     start = new Date();
 
+    //在startDelay之后开始播放midi
     setTimeout(function() { 
       player.start();
     }, startDelay);
