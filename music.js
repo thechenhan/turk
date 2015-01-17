@@ -56,7 +56,7 @@ function switchTo(file) {
     }
 
 
-   // addNotePins();
+    addNotePins();
    
 
     player.addListener(function(data) {

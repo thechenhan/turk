@@ -1,4 +1,5 @@
-
+var cylinderMaterial = new THREE.MeshPhongMaterial( { color: 0xD1F5FD, specular: 0xD1F5FD, shininess: 100 } );
+var pinObject = new THREE.Object3D();
 
 var renderer, scene, camera, controls;
 
@@ -139,8 +140,8 @@ function fillScene() {
 }
 
 function addNotePins(){
-  scene.remove(notespins); //remove the notespin from scene
-  revolvingCylinder.remove(notespins); //remove the notes pin from cylinder object;
+  scene.remove(pinObject); //remove the notespin from scene
+  revolvingCylinder.remove(pinObject); //remove the notes pin from cylinder object;
   var pinGeo = new THREE.CylinderGeometry( 0.1, 0.5, 3, 32 );
     for( var i = 1; i <= 88; i ++){
     
@@ -148,19 +149,18 @@ function addNotePins(){
     pin.rotation.x = 90 / 180 * Math.PI;
     pin.position.x = (i-1) * 1.5 + 0.5; 
     pin.position.z = 20;
-    notespins.add(pin);
+    pinObject.add(pin);
 
   }
-  
-  scene.add(notespins);
+  revolvingCylinder.add(pinObject);
+  scene.add(pinObject);
 
 }
 
 
 
 function addParts(){
-    var cylinderMaterial = new THREE.MeshPhongMaterial( { color: 0xD1F5FD, specular: 0xD1F5FD, shininess: 100 } );
-var cylinderGeo = new THREE.CylinderGeometry( 20, 20, 131.5, 32 );
+  var cylinderGeo = new THREE.CylinderGeometry( 20, 20, 131.5, 32 );
   var cylinder = new THREE.Mesh( cylinderGeo, cylinderMaterial );
   cylinder.rotation.z = 90 / 180 * Math.PI;
   cylinder.position.x = 65.75;
@@ -174,9 +174,11 @@ var cylinderGeo = new THREE.CylinderGeometry( 20, 20, 131.5, 32 );
     pin.rotation.x = 90 / 180 * Math.PI;
     pin.position.x = (i-1) * 1.5 + 0.5; 
     pin.position.z = 20;
-    revolvingCylinder.add(pin);
+    pinObject.add(pin);
+   
 
   }
+  revolvingCylinder.add(pinObject);
   scene.add( revolvingCylinder );
 
   var combAssem = new THREE.Object3D();
