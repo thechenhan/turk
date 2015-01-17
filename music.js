@@ -36,7 +36,7 @@ function switchTo(file) {
 
   player.loadFile(fileContent, function() {
     midiData = player.data;
-
+    console.log('testingPlayerData');
     currentTime = 0;
 
     //扫描所有midi文件音符
@@ -55,7 +55,12 @@ function switchTo(file) {
       }
     }
 
+
+   // addNotePins();
+   
+
     player.addListener(function(data) {
+      console.log('data.now:', data.now);
       resetTimer(data.now);
     });
 

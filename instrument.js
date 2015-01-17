@@ -1,3 +1,5 @@
+
+
 var renderer, scene, camera, controls;
 
 var transitionColors = [
@@ -86,8 +88,8 @@ function Ball(keyTarget) {
 }
 
 function init() {
-  var WIDTH = $('.rest').width() - 5,
-      HEIGHT = $('.rest').height() - 5,
+  var WIDTH = $('.rest').width(),
+      HEIGHT = $('.rest').height(),
       VIEW_ANGLE = 45,
       ASPECT = WIDTH / HEIGHT,
       NEAR = 0.1,
@@ -97,10 +99,16 @@ function init() {
 
   // create a WebGL renderer, camera
   // and a scene
-  renderer = new THREE.WebGLRenderer();
+  
+  renderer = new THREE.WebGLRenderer( { antialias: true } );
+  renderer.gammaInput = true;
+  renderer.gammaOutput = true;
+  renderer.setSize(WIDTH, HEIGHT);
+  renderer.setClearColorHex( 0xAAAAAA, 1.0 );
   camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
   scene = new THREE.Scene();
 
+  camera.position.x = 200;
   camera.position.y = 200;
   camera.position.z = 200;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -109,7 +117,7 @@ function init() {
   renderer.setSize(WIDTH, HEIGHT);
 
   // attach the render-supplied DOM element
-  $('#turk').append(renderer.domElement);
+  $('#MusicBox').append(renderer.domElement);
 
   // and the camera
   scene.add(camera);
@@ -121,21 +129,162 @@ function init() {
 }
 
 function fillScene() {
-  addCannon(); //中间大的弹珠发射桶
+  //addCannon(); //中间大的弹珠发射桶
   addLighting(); //添加环境光
-  addKeys(); //添加按键
-  addBuckets(); //旁边一圈小的弹珠接受装置
-  addTubing(); //添加其他管子
+  //addKeys(); //添加按键
+  //addBuckets(); //旁边一圈小的弹珠接受装置
+  //addTubing(); //添加其他管子
+  addParts();
+  //renderer.render(scene, camera);
 }
 
-function addLighting() {
-  var light1 = new THREE.PointLight(0xFFFFFF);
+function addNotePins(){
+  scene.remove(notespins); //remove the notespin from scene
+  revolvingCylinder.remove(notespins); //remove the notes pin from cylinder object;
+  var pinGeo = new THREE.CylinderGeometry( 0.1, 0.5, 3, 32 );
+    for( var i = 1; i <= 88; i ++){
+    
+    var pin = new THREE.Mesh( pinGeo, cylinderMaterial );
+    pin.rotation.x = 90 / 180 * Math.PI;
+    pin.position.x = (i-1) * 1.5 + 0.5; 
+    pin.position.z = 20;
+    notespins.add(pin);
+
+  }
+  
+  scene.add(notespins);
+
+}
+
+
+
+function addParts(){
+    var cylinderMaterial = new THREE.MeshPhongMaterial( { color: 0xD1F5FD, specular: 0xD1F5FD, shininess: 100 } );
+var cylinderGeo = new THREE.CylinderGeometry( 20, 20, 131.5, 32 );
+  var cylinder = new THREE.Mesh( cylinderGeo, cylinderMaterial );
+  cylinder.rotation.z = 90 / 180 * Math.PI;
+  cylinder.position.x = 65.75;
+  var revolvingCylinder = new THREE.Object3D();
+  revolvingCylinder.add(cylinder);
+
+  var pinGeo = new THREE.CylinderGeometry( 0.1, 0.5, 3, 32 );
+    for( var i = 1; i <= 88; i ++){
+    
+    var pin = new THREE.Mesh( pinGeo, cylinderMaterial );
+    pin.rotation.x = 90 / 180 * Math.PI;
+    pin.position.x = (i-1) * 1.5 + 0.5; 
+    pin.position.z = 20;
+    revolvingCylinder.add(pin);
+
+  }
+  scene.add( revolvingCylinder );
+
+  var combAssem = new THREE.Object3D();
+  var combMaterial = new THREE.MeshPhongMaterial( { color: 0x707070, specular: 0xD1F5FD, shininess: 500 } );
+  
+  var extrudeSettings = {
+    amount      : 0.4, //base thickness
+    steps     : 1,
+    bevelEnabled  : false,    
+  };
+
+
+  var combBaseShape = new THREE.Shape();
+    combBaseShape.moveTo(  0, 0 );    
+    combBaseShape.lineTo(  0, 10 );
+    combBaseShape.lineTo(  131.5, 30 ); 
+    combBaseShape.lineTo(  131.5, 0 ); 
+    combBaseShape.lineTo(  0, 0 );
+  var combBaseGeo = new THREE.ExtrudeGeometry( combBaseShape, extrudeSettings );
+  var combBase = new THREE.Mesh( combBaseGeo, combMaterial);
+  
+  combAssem.add( combBase );
+  
+
+  
+  var numKeys = 88;
+    var comnbFingerExtrudeSettings = {
+    amount      : 0.2, //combFinger thickness
+    steps     : 1,
+    bevelEnabled  : false,    
+  };
+
+
+
+  for (var i = 1; i < numKeys + 1; i++){
+    var baseFingerShape = new THREE.Shape();
+    
+    var startPointX = 1.5 * (i - 1);
+    var startPointY = 10;
+
+    baseFingerShape.moveTo( startPointX, startPointY );
+    baseFingerShape.lineTo( startPointX, startPointY + 30);
+    baseFingerShape.lineTo( startPointX + 1, startPointY + 30 );
+    baseFingerShape.lineTo( startPointX + 1, startPointY );
+    baseFingerShape.lineTo( startPointX, startPointY ); 
+    var combFingerGeo = new THREE.ExtrudeGeometry( baseFingerShape, comnbFingerExtrudeSettings );
+    var combFinger = new THREE.Mesh( combFingerGeo, combMaterial);
+  
+    combAssem.add( combFinger );
+    
+
+
+  }  
+
+  scene.add( combAssem );
+
+  combAssem.rotation.x = -90 / 180 * Math.PI;
+  combAssem.position.z = 20 + 40 + 1; //the cylinder  R + width comb + gap
+  combAssem.position.y = -0.35; //makesure the pin above the comb
+
+
+}
+
+function addLighting(){
+  
+  scene.fog = new THREE.Fog( 0x808080, 2000, 4000 );
+
+  // LIGHTS
+  var ambientLight = new THREE.AmbientLight( 0x222222 );
+
+  var light = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
+  light.position.set( 200, 400, 500 );
+
+  var light2 = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
+  light2.position.set( -500, 250, -200 );
+
+  scene.add(ambientLight);
+  scene.add(light);
+  scene.add(light2);
+
+}
+
+
+
+function addLighting2() {
+ var ambientLight = new THREE.AmbientLight( 0x222222 );
+
+  var light = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
+  light.position.set( 200, 400, 500 );
+
+  var light2 = new THREE.PointLight( 0xFFFFFF, 1, 0 );
+  light.position.set( 350, 350, 350 );
+
+  var light3 = new THREE.PointLight( 0xFFFFFF, 1, 0 );
+  light.position.set( 350, 350, -50 );
+
+  scene.add(ambientLight);
+  scene.add(light);
+  scene.add(light2);
+  scene.add(light3);
+
+   var light1 = new THREE.PointLight(0xFFFFFF);
 
   light1.position.x = 0;
   light1.position.y = 500;
   light1.position.z = 500;
 
-  scene.add(light1);
+  //scene.add(light1);
 
   var light2 = new THREE.PointLight(0xFFFFFF);
 
@@ -143,7 +292,7 @@ function addLighting() {
   light2.position.y = 500;
   light2.position.z = -500;
 
-  scene.add(light2);
+  //scene.add(light2);
 }
 
 function addCannon() {
@@ -292,8 +441,8 @@ function animate() {
     throwBallsToMusic();
   }
 
-  moveBalls();
-  darkenKeys();
+  //moveBalls();
+  //darkenKeys();
 
   renderer.render(scene, camera);
 }
@@ -380,7 +529,7 @@ function addControls() {
     controls = new THREE.TrackballControls(camera, renderer.domElement);
     var radius = 100 * 0.75; // scalar value used to determine relative zoom distances
     controls.rotateSpeed = 1;
-    controls.zoomSpeed = 0.1;
+    controls.zoomSpeed = 2;
     controls.panSpeed = 1;
 
     controls.noZoom = false;
@@ -395,6 +544,62 @@ function addControls() {
     controls.keys = [65, 83, 68]; // [ rotateKey, zoomKey, panKey ]
 }
 
+function drawHelpers() {
+  if (ground) {
+    Coordinates.drawGround({size:100});
+  }
+  if (gridX) {
+    Coordinates.drawGrid({size:100,scale:1});
+  }
+  if (gridY) {
+    Coordinates.drawGrid({size:100,scale:1, orientation:"y"});
+  }
+  if (gridZ) {
+    Coordinates.drawGrid({size:100,scale:1, orientation:"z"});
+  }
+  if (axes) {
+    Coordinates.drawAllAxes({axisLength:100,axisRadius:1,axisTess:50});
+  }
+
+  if (bCube) {
+    var cubeMaterial = new THREE.MeshLambertMaterial(
+      { color: 0xFFFFFF, opacity: 0.7, transparent: true } );
+    var cube = new THREE.Mesh(
+      new THREE.CubeGeometry( 2, 2, 2 ), cubeMaterial );
+    scene.add( cube );
+  }
+}
+
+function setupGui() {
+
+  effectController = {
+
+    newCube: bCube,
+    newGridX: gridX,
+    newGridY: gridY,
+    newGridZ: gridZ,
+    newGround: ground,
+    newAxes: axes
+  };
+
+  var gui = new dat.GUI();
+  gui.add( effectController, "newCube").name("Show cube");
+  gui.add( effectController, "newGridX").name("Show XZ grid");
+  gui.add( effectController, "newGridY" ).name("Show YZ grid");
+  gui.add( effectController, "newGridZ" ).name("Show XY grid");
+  gui.add( effectController, "newGround" ).name("Show ground");
+  gui.add( effectController, "newAxes" ).name("Show axes");
+}
+
+try {
 init();
 fillScene();
+var axisHelper = new THREE.AxisHelper( 500 );
+scene.add( axisHelper );
+//setupGui();
+//drawHelpers();
 animate();
+} catch(e) {
+  var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
+  $('#container').append(errorReport+e);
+}
