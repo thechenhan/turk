@@ -60,10 +60,10 @@ function switchTo(file) {
     addNotePins();
    
 
-    /*player.addListener(function(data) {
-      console.log('data.now:', data.now);
-      resetTimer(data.now);
-    }); */
+    player.addListener(function(data) {
+      
+      updateComb();
+    }); 
 
     start = new Date();
 
