@@ -1,10 +1,11 @@
-var startDelay = 6000;
+var startDelay = 2000;
 
 var notes = []; //存储全部音符
 var start; //全局开始播放时间
 var musicPlaying = false; //flag标志全局是否正在播放音乐
 
 var player; //全局midi播放器
+var clock = new THREE.Clock();
 
 window.onload = function() {
   MIDI.loadPlugin(function() {
@@ -13,7 +14,7 @@ window.onload = function() {
     if (window.location.hash === '#' || window.location.hash === '') {
       //switchTo('tracks/157-Rachmaninov - Flight of the Bumblebee');
     }
-  }, "soundfont/acoustic_grand_piano-mp3.js");
+  }, "soundfont/xylophone-mp3.js");
 }
 
 function switchTo(file) {
@@ -59,10 +60,10 @@ function switchTo(file) {
     addNotePins();
    
 
-    player.addListener(function(data) {
+    /*player.addListener(function(data) {
       console.log('data.now:', data.now);
       resetTimer(data.now);
-    });
+    }); */
 
     start = new Date();
 

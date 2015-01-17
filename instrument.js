@@ -1,8 +1,9 @@
 var cylinderMaterial = new THREE.MeshPhongMaterial( { color: 0xD1F5FD, specular: 0xD1F5FD, shininess: 100 } );
 var pinObject = new THREE.Object3D();
+var revolvingCylinder = new THREE.Object3D();
 
 var renderer, scene, camera, controls;
-
+var ballColor = 0xCC6600;
 var transitionColors = [
   0xCC6600,
   0xD17519,
@@ -16,19 +17,13 @@ var transitionColors = [
   0xFAF0E6
 ];
 
-var brassColor = transitionColors[0];
-var ballColor = 0xD4D4BF;
-var tubeColor = 0xD1D1D1;
+var cylinderRadius = 20;
+var keyInterval = 0.5;
+var keyWidth = 1;
+var cylinderLength = 88 * keyWidth + 87 * keyInterval;
+var pinBaseRaidus = 0.15;
+var pinTopRaidus = 0.05;
 
-var cannonBaseRadius = 10;
-var cannonTopRadius = 15;
-var cannonThickness = 3;
-var cannonHeight = 40;
-
-var shortestKeyLength = 15;
-var longestKeyLength = 40;
-var keyWidth = 5;
-var keyThickness = 2;
 
 var numKeys = 88; //按键数量 88键midi钢琴
 
@@ -72,7 +67,7 @@ var queue = []; // pronounced: kWEH.
 var ballHeadstart = 1730;
 
 var timeInSong = -startDelay;
-var lastUpdatedTime;
+var lastUpdatedTime = 0;
 
 function Ball(keyTarget) {
   this.target = keyTarget;
@@ -130,28 +125,60 @@ function init() {
 }
 
 function fillScene() {
-  //addCannon(); //中间大的弹珠发射桶
-  addLighting(); //添加环境光
-  //addKeys(); //添加按键
-  //addBuckets(); //旁边一圈小的弹珠接受装置
-  //addTubing(); //添加其他管子
-  addParts();
-  //renderer.render(scene, camera);
+ 
+  addLighting(); //add the light
+
+  addParts(); //add the main part: comb, cylinder, etc.
+ 
 }
 
 function addNotePins(){
   scene.remove(pinObject); //remove the notespin from scene
   revolvingCylinder.remove(pinObject); //remove the notes pin from cylinder object;
-  var pinGeo = new THREE.CylinderGeometry( 0.1, 0.5, 3, 32 );
-    for( var i = 1; i <= 88; i ++){
-    
-    var pin = new THREE.Mesh( pinGeo, cylinderMaterial );
-    pin.rotation.x = 90 / 180 * Math.PI;
-    pin.position.x = (i-1) * 1.5 + 0.5; 
-    pin.position.z = 20;
-    pinObject.add(pin);
+  pinObject = new THREE.Object3D();
+  var pinGeo = new THREE.CylinderGeometry( pinTopRaidus, pinBaseRaidus, 3, 32 );
+  var songFullTime = notes[notes.length - 1].time;
 
+  for ( var i = 0; i < notes.length; i++) { //potential problem: the last one is the fist one. 
+    var pinPosition = notes[i].note - MIDI.pianoKeyOffset
+    var noteTime = notes[i].time;
+    console.log(noteTime, pinPosition);
+
+    var pin = new THREE.Mesh( pinGeo, cylinderMaterial );
+    var pinTheta = noteTime / songFullTime * 2 * Math.PI;
+    pin.rotation.x = - pinTheta;
+    pin.position.x = (pinPosition - 1 ) * 1.5 + 0.5; 
+    
+    if (pinTheta >= 0 && pinTheta < 90) {
+      pin.position.z = cylinderRadius * Math.sin (- pinTheta);
+    pin.position.y = cylinderRadius * Math.cos (- pinTheta);
+
+    }else if (pinTheta >= 90 && pinTheta < 180){
+      pinTheta = pinTheta - 90;
+      pin.position.z = - cylinderRadius * Math.cos ( pinTheta);
+    pin.position.y = - cylinderRadius * Math.sin ( pinTheta);
+
+
+    }else if (pinTheta >= 180 && pinTheta < 270){
+       pinTheta = pinTheta - 180;
+      pin.position.z = cylinderRadius * Math.sin ( pinTheta);
+    pin.position.y = - cylinderRadius * Math.cos ( pinTheta);
+
+
+    }else {
+ pinTheta = pinTheta - 270;
+      pin.position.z = cylinderRadius * Math.cos ( pinTheta);
+    pin.position.y =  cylinderRadius * Math.sin ( pinTheta);
+
+
+    }
+
+    //pin.position.z = cylinderRadius * Math.sin (- pinTheta);
+    //pin.position.y = cylinderRadius * Math.cos (- pinTheta);
+    pinObject.add(pin);
   }
+
+  pinObject.rotation.x = 90 / 180 * Math.PI; //change the start point from left level;
   revolvingCylinder.add(pinObject);
   scene.add(pinObject);
 
@@ -160,25 +187,14 @@ function addNotePins(){
 
 
 function addParts(){
-  var cylinderGeo = new THREE.CylinderGeometry( 20, 20, 131.5, 32 );
+  var cylinderGeo = new THREE.CylinderGeometry( cylinderRadius, cylinderRadius, cylinderLength, 32 );
   var cylinder = new THREE.Mesh( cylinderGeo, cylinderMaterial );
   cylinder.rotation.z = 90 / 180 * Math.PI;
-  cylinder.position.x = 65.75;
-  var revolvingCylinder = new THREE.Object3D();
+  cylinder.position.x = cylinderLength / 2;
+  
   revolvingCylinder.add(cylinder);
 
-  var pinGeo = new THREE.CylinderGeometry( 0.1, 0.5, 3, 32 );
-    for( var i = 1; i <= 88; i ++){
-    
-    var pin = new THREE.Mesh( pinGeo, cylinderMaterial );
-    pin.rotation.x = 90 / 180 * Math.PI;
-    pin.position.x = (i-1) * 1.5 + 0.5; 
-    pin.position.z = 20;
-    pinObject.add(pin);
-   
-
-  }
-  revolvingCylinder.add(pinObject);
+ 
   scene.add( revolvingCylinder );
 
   var combAssem = new THREE.Object3D();
@@ -236,7 +252,7 @@ function addParts(){
   scene.add( combAssem );
 
   combAssem.rotation.x = -90 / 180 * Math.PI;
-  combAssem.position.z = 20 + 40 + 1; //the cylinder  R + width comb + gap
+  combAssem.position.z = cylinderRadius + 40 + 1; //the cylinder  R + width comb + gap
   combAssem.position.y = -0.35; //makesure the pin above the comb
 
 
@@ -263,166 +279,8 @@ function addLighting(){
 
 
 
-function addLighting2() {
- var ambientLight = new THREE.AmbientLight( 0x222222 );
 
-  var light = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
-  light.position.set( 200, 400, 500 );
 
-  var light2 = new THREE.PointLight( 0xFFFFFF, 1, 0 );
-  light.position.set( 350, 350, 350 );
-
-  var light3 = new THREE.PointLight( 0xFFFFFF, 1, 0 );
-  light.position.set( 350, 350, -50 );
-
-  scene.add(ambientLight);
-  scene.add(light);
-  scene.add(light2);
-  scene.add(light3);
-
-   var light1 = new THREE.PointLight(0xFFFFFF);
-
-  light1.position.x = 0;
-  light1.position.y = 500;
-  light1.position.z = 500;
-
-  //scene.add(light1);
-
-  var light2 = new THREE.PointLight(0xFFFFFF);
-
-  light2.position.x = 0;
-  light2.position.y = 500;
-  light2.position.z = -500;
-
-  //scene.add(light2);
-}
-
-function addCannon() {
-  var cannon = new THREE.Mesh(
-    new THREE.TubeGeometry(cannonTopRadius, cannonBaseRadius, cannonTopRadius - cannonThickness, cannonBaseRadius - cannonThickness, cannonHeight, 32, 1, false),
-    new THREE.MeshPhongMaterial({ color: brassColor })
-  );
-
-  scene.add(cannon);
-
-  var cannonBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(cannonBaseRadius, cannonBaseRadius, tubeRadius * 2, 32, 1, false),
-    new THREE.MeshPhongMaterial({ color: brassColor })
-  );
-
-  cannonBase.position.y = -cannonHeight / 2;
-
-  scene.add(cannonBase);
-
-  var centralSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(cannonBaseRadius, 16, 16),
-    new THREE.MeshPhongMaterial({ color: brassColor })
-  );
-
-  centralSphere.position.y = -cannonHeight / 2;
-
-  scene.add(centralSphere);
-}
-
-function addKeys() {
-  for (var i = 0; i < numKeys; i++) {
-    // use linear interpolation to find key length
-    var weight = i / numKeys;
-    var keyLength = longestKeyLength + (shortestKeyLength - longestKeyLength) * weight;
-
-    var key = new THREE.Mesh(
-      new THREE.CubeGeometry(keyLength, keyThickness, keyWidth),
-      new THREE.MeshPhongMaterial({ color: brassColor })
-    );
-
-    key.position.x = keyRadius;
-
-    var temp = new THREE.Object3D();
-    temp.add(key);
-
-    temp.rotation.y = (i / numKeys) * 2 * Math.PI;
-
-    scene.add(temp);
-
-    keys.push(key);
-  }
-}
-
-function addBuckets() {
-  for (var i = 0; i < numKeys; i++) {
-    var bucket = new THREE.Mesh(
-      // new THREE.CylinderGeometry(bucketTopRadius, bucketBaseRadius, bucketHeight, 32, 1, false),
-      new THREE.TubeGeometry(bucketTopRadius, bucketBaseRadius, bucketTopRadius - bucketThickness, bucketBaseRadius - bucketThickness, bucketHeight, 16, 1, false),
-      new THREE.MeshPhongMaterial({ color: brassColor })
-    );
-
-    bucket.position.x = bucketRadiusToCannon - bucketPositionOffset;
-    bucket.rotation.z = Math.PI / 2 - firingAngle;
-
-    var temp = new THREE.Object3D();
-    temp.add(bucket);
-
-    temp.rotation.y = (i / numKeys) * 2 * Math.PI;
-
-    scene.add(temp);
-  }
-}
-
-function addTubing() {
-  var bottomTorus = new THREE.Mesh(
-    new THREE.TorusGeometry(bucketRadiusToCannon, tubeRadius, 8, numKeys, 2 * Math.PI),
-    new THREE.MeshPhongMaterial({ color: tubeColor })
-  );
-
-  bottomTorus.rotation.x = Math.PI / 2;
-  bottomTorus.position.y = -cannonHeight / 2;
-
-  scene.add(bottomTorus);
-  
-  for (var i = 0; i < numKeys; i++) {
-    var upTube = new THREE.Mesh(
-      new THREE.CylinderGeometry(tubeRadius, tubeRadius, cannonHeight / 2, 32, 1, false),
-      new THREE.MeshPhongMaterial({ color: tubeColor })
-    );
-
-    upTube.position.x = bucketRadiusToCannon;
-
-    var darkBucketBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(darkBaseRadius, darkBaseRadius, darkBaseHeight, 16, 1),
-      new THREE.MeshPhongMaterial({ color: blackColor })
-    );
-
-    darkBucketBase.position.y = cannonHeight / 4;
-    darkBucketBase.position.x = bucketRadiusToCannon;
-
-    var temp = new THREE.Object3D();
-    temp.add(upTube);
-    temp.add(darkBucketBase);
-
-    temp.position.y = -cannonHeight / 4;
-    temp.rotation.y = i * 2 * Math.PI / numKeys;
-
-    scene.add(temp);
-  }
-
-  for (var i = 0; i < numCentralizingPipes; i++) {
-    var inTube = new THREE.Mesh(
-      new THREE.CylinderGeometry(tubeRadius, tubeRadius, bucketRadiusToCannon, 32, 1, false),
-      new THREE.MeshPhongMaterial({ color: tubeColor })
-    );
-
-    inTube.position.x = bucketRadiusToCannon / 2;
-    inTube.position.y = -cannonHeight / 2;
-    inTube.rotation.z = Math.PI / 2;
-
-    var tube = new THREE.Object3D();
-    tube.add(inTube);
-
-    tube.rotation.y = (i / numCentralizingPipes) * 2 * Math.PI;
-
-    scene.add(tube);
-  }
-}
 
 function addBall(keyTarget) {
   var ball = new Ball(keyTarget);
@@ -435,18 +293,33 @@ function addBall(keyTarget) {
 }
 
 function animate() {
-  requestAnimationFrame(animate);
+  window.requestAnimationFrame(animate);
+  timeDelta = Date.now() - lastUpdatedTime
+  
 
+  
   controls.update();
 
-  if (musicPlaying) {
-    throwBallsToMusic();
+  if (MIDI.Player.playing) {
+     pinObject.rotation.x += timeDelta / notes[notes.length-1].time * 360 / 180 * Math.PI;
+   // rotateCylinder();
   }
 
   //moveBalls();
   //darkenKeys();
-
+  lastUpdatedTime = Date.now();
   renderer.render(scene, camera);
+}
+
+function rotateCylinder(){
+ 
+  var delta = clock.getDelta();
+  //revolvingCylinder.rotation.x += 
+  pinObject.rotation.x += delta * 1000 / notes[notes.length-1].time * 360 / 180 * Math.PI;
+
+
+
+
 }
 
 // where the magic happens
@@ -546,60 +419,14 @@ function addControls() {
     controls.keys = [65, 83, 68]; // [ rotateKey, zoomKey, panKey ]
 }
 
-function drawHelpers() {
-  if (ground) {
-    Coordinates.drawGround({size:100});
-  }
-  if (gridX) {
-    Coordinates.drawGrid({size:100,scale:1});
-  }
-  if (gridY) {
-    Coordinates.drawGrid({size:100,scale:1, orientation:"y"});
-  }
-  if (gridZ) {
-    Coordinates.drawGrid({size:100,scale:1, orientation:"z"});
-  }
-  if (axes) {
-    Coordinates.drawAllAxes({axisLength:100,axisRadius:1,axisTess:50});
-  }
 
-  if (bCube) {
-    var cubeMaterial = new THREE.MeshLambertMaterial(
-      { color: 0xFFFFFF, opacity: 0.7, transparent: true } );
-    var cube = new THREE.Mesh(
-      new THREE.CubeGeometry( 2, 2, 2 ), cubeMaterial );
-    scene.add( cube );
-  }
-}
-
-function setupGui() {
-
-  effectController = {
-
-    newCube: bCube,
-    newGridX: gridX,
-    newGridY: gridY,
-    newGridZ: gridZ,
-    newGround: ground,
-    newAxes: axes
-  };
-
-  var gui = new dat.GUI();
-  gui.add( effectController, "newCube").name("Show cube");
-  gui.add( effectController, "newGridX").name("Show XZ grid");
-  gui.add( effectController, "newGridY" ).name("Show YZ grid");
-  gui.add( effectController, "newGridZ" ).name("Show XY grid");
-  gui.add( effectController, "newGround" ).name("Show ground");
-  gui.add( effectController, "newAxes" ).name("Show axes");
-}
 
 try {
 init();
 fillScene();
 var axisHelper = new THREE.AxisHelper( 500 );
 scene.add( axisHelper );
-//setupGui();
-//drawHelpers();
+
 animate();
 } catch(e) {
   var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
