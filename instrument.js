@@ -3,16 +3,20 @@ var texture = new THREE.ImageUtils.loadTexture('gold.jpg');
 var texture2 = new THREE.ImageUtils.loadTexture('steel2.jpg');
 var texture3 = new THREE.ImageUtils.loadTexture('bronze.jpg');
 
+
 var cylinderMaterial = new THREE.MeshPhongMaterial( {  specular: 0xD1F5FD, shininess: 500, map: texture } );
 var baseMaterial = new THREE.MeshPhongMaterial( {  specular: 0xD1F5FD, shininess: 500, map: texture } );
 
 var blackMaterial = new THREE.MeshPhongMaterial( {color:0x000000, specular: 0xD1F5FD, shininess: 500, map: texture } );
+var steelMaterial = new THREE.MeshPhongMaterial( {specular: 0xD1F5FD, shininess: 500, map: texture2 } );
 
 var pinObject = new THREE.Object3D();
 var revolvingCylinder = new THREE.Object3D();
 var combFingerObejct = new THREE.Object3D();
 var combFingerAarry = [];
 var combAssem = new THREE.Object3D();
+var handleAssem = new THREE.Object3D();
+
 
 var comnbFingerExtrudeSettings = {
     amount      : 0.2, //combFinger thickness
@@ -20,7 +24,7 @@ var comnbFingerExtrudeSettings = {
     bevelEnabled  : false,    
   };
 
-var combMaterial = new THREE.MeshPhongMaterial( {specular: 0xD1F5FD, shininess: 500, map: texture2 } );
+var combMaterial = new THREE.MeshPhongMaterial( {specular: 0xD1F5FD, shininess: 500, map: texture3 } );
   
 var extrudeSettings = {
     amount      : 0.4, //base thickness
@@ -29,19 +33,7 @@ var extrudeSettings = {
   };
 
 var renderer, scene, camera, controls;
-var ballColor = 0xCC6600;
-var transitionColors = [
-  0xCCFF00,
-  0xCC99FF,
-  0xFF3399,
-  0x66FFFF,
-  0x3399FF,
-  0x009999,
-  0x009900,
-  0x666600,
-  0x663366,
-  0xFFFFFF
-];
+
 
 var cylinderRadius = 20;
 var keyInterval = 0.5;
@@ -51,7 +43,7 @@ var pinBaseRaidus = 0.15;
 var pinTopRaidus = 0.03;
 
 
-var numKeys = 88; //按键数量 88键midi钢琴
+var numKeys = 88; 
 
 var keyRadius = 100;
 
@@ -187,11 +179,21 @@ var boxBaseShape = new THREE.Shape();
   cylinder.position.x = 131.5 + 2.5;
   scene.add( cylinder );
 
+  //free end , the last big black cylinder;
   var geometry = new THREE.CylinderGeometry( 22, 22, 10, 32 );
   var cylinder = new THREE.Mesh( geometry, blackMaterial);
   cylinder.rotation.z = 0.5 * Math.PI;
   cylinder.position.x = 131.5 + 2.5 + 7.5;
   scene.add( cylinder );
+
+  //add a box to finish the fix work.
+  var geometry = new THREE.CubeGeometry( 32, 10, 44);
+  var box = new THREE.Mesh(geometry, blackMaterial);
+  box.rotation.z = 0.5 * Math.PI;
+  box.position.x = 131.5 + 2.5 + 7.5;
+  box.position.y = - 18;
+
+  scene.add( box );
 
   var geometry = new THREE.CylinderGeometry( 22, 22, 4, 32 );
   var cylinder = new THREE.Mesh( geometry, blackMaterial);
@@ -199,19 +201,145 @@ var boxBaseShape = new THREE.Shape();
   cylinder.position.x = -2;
   scene.add( cylinder );
 
-  var geometry = new THREE.CylinderGeometry( 23, 23, 8, 32 );
+  var geometry = new THREE.CylinderGeometry( 23, 23, 15, 32 );
   var cylinder = new THREE.Mesh( geometry, blackMaterial);
   cylinder.rotation.z = 0.5 * Math.PI;
   cylinder.position.x = -2 - 4;
   scene.add( cylinder );
 
-  var geometry = new THREE.CylinderGeometry( 4, 4, 30, 32 );
-  var cylinder = new THREE.Mesh( geometry, combMaterial);
- 
+
+  var geometry = new THREE.CylinderGeometry( 4, 4, 60, 32 );
+  var cylinder = new THREE.Mesh( geometry, steelMaterial);
   cylinder.position.x = -2 - 4;
   cylinder.position.z = -30;
-
   scene.add( cylinder );
+
+  var cylinder = new THREE.Mesh( geometry, steelMaterial);
+  cylinder.position.x = -2 - 4 - 30;
+  cylinder.position.z = -30;
+  scene.add( cylinder );
+
+  var cylinder = new THREE.Mesh( geometry, steelMaterial);
+  cylinder.position.x = -2 - 4;
+  cylinder.position.z = 30;
+  scene.add( cylinder );
+
+  var cylinder = new THREE.Mesh( geometry, steelMaterial);
+  cylinder.position.x = -2 - 4 - 30;
+  cylinder.position.z = 30;
+  scene.add( cylinder );
+
+  var boxGeometry = new THREE.CubeGeometry( 8, 59.9, 32 );
+  var box = new THREE.Mesh( boxGeometry, steelMaterial);
+  box.position.x = -6 - 15;
+  box.position.z = -30;
+  box.rotation.y =0.5 * Math.PI;
+  scene.add( box );
+
+  var box = new THREE.Mesh( boxGeometry, steelMaterial);
+  box.position.x = -6 - 15;
+  box.position.z = 30;
+  box.rotation.y =0.5 * Math.PI;
+  scene.add( box );
+
+  //rear small support
+  var geometry = new THREE.CylinderGeometry( 4, 4, 4, 32 );
+  var cylinder = new THREE.Mesh( geometry, combMaterial);
+  cylinder.rotation.z = 0.5 * Math.PI;
+  cylinder.position.x = 131.5 + 2.5 + 7.5 + 7;
+  scene.add( cylinder );
+
+  //driven rings on the cylinder
+  var geometry = new THREE.SphereGeometry( 6, 32, 32 );
+  for (var i = 0; i <= 15; i ++) {
+  var rings = new THREE.Mesh( geometry, combMaterial);
+  rings.scale.z = 0.3;
+  rings.position.x = -20;
+  rings.position.y = 10;
+  rings.position.z = -15 + 2 * i;
+  scene.add(rings);
+  }
+  
+
+  //handle
+  var geometry = new THREE.CylinderGeometry( 4, 4, 110, 32 );
+  var cylinder = new THREE.Mesh( geometry, combMaterial);
+  cylinder.rotation.x = 0.5 * Math.PI;
+  cylinder.position.x = -20;
+  cylinder.position.y = 10;
+  cylinder.position.z = - 20;
+  handleAssem.add(cylinder);
+  //scene.add( cylinder );
+
+  
+
+
+
+  //handle ending
+  var geometry = new THREE.CylinderGeometry( 4, 7, 15, 32 );
+  var cylinder = new THREE.Mesh( geometry, blackMaterial);
+  cylinder.rotation.x = 0.5 * Math.PI;
+  cylinder.position.x = -20;
+  cylinder.position.y = 10;
+  cylinder.position.z = - 74;
+  handleAssem.add(cylinder);
+  //scene.add( cylinder );
+
+
+
+
+  
+
+  //handle neck
+  var neckMaterial = new THREE.MeshPhongMaterial( {color:0xFF0000, specular: 0xD1F5FD, shininess: 500 } );
+
+  var geometry = new THREE.CylinderGeometry( 5, 5, 5, 32 );
+  var cylinder = new THREE.Mesh( geometry, blackMaterial);
+  cylinder.rotation.x = 0.5 * Math.PI;
+  cylinder.position.x = -20;
+  cylinder.position.y = 10;
+  cylinder.position.z = 35;
+  scene.add( cylinder );
+
+scene.add (handleAssem);
+
+
+var extrudeSettings = {
+    amount      : 25, //combFinger thickness
+    steps     : 1,
+    bevelEnabled  : false,    
+    bevelSize : 1
+  
+  };
+ var combBaseShape = new THREE.Shape();
+    combBaseShape.moveTo(  0, 0 );    
+    combBaseShape.lineTo(  0, 10 );
+    combBaseShape.lineTo(  131.5, 30 ); 
+    combBaseShape.lineTo(  131.5, 0 ); 
+    combBaseShape.lineTo(  0, 0 );
+  var combBaseGeo = new THREE.ExtrudeGeometry( combBaseShape, extrudeSettings );
+  var combBase = new THREE.Mesh( combBaseGeo, steelMaterial);
+  combBase.rotation.x = - 0.5 * Math.PI;
+  combBase.position.y = - 25.3;
+  combBase.position.z = 61;
+
+  scene.add(combBase);
+
+  var geometry = new THREE.SphereGeometry( 3, 32, 32 );
+  var sphere = new THREE.Mesh( geometry, blackMaterial );
+  sphere.position.z = 55;
+  sphere.position.x = 13;
+  scene.add( sphere );
+
+   var sphere = new THREE.Mesh( geometry, blackMaterial );
+  sphere.position.z = 55;
+  sphere.position.x = 68;
+  scene.add( sphere );
+
+ var sphere = new THREE.Mesh( geometry, blackMaterial );
+  sphere.position.z = 55;
+  sphere.position.x = 120;
+  scene.add( sphere );
 
 
 
@@ -395,15 +523,10 @@ function addLighting(){
 
 
 
-function addBall(keyTarget) {
-  var ball = new Ball(keyTarget);
 
-  queue.push(Date.now());
 
-  balls.push(ball);
 
-  scene.add(ball.object);
-}
+
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -416,6 +539,9 @@ function animate() {
   if (MIDI.Player.playing) {
      pinObject.rotation.x += timeDelta / notes[notes.length-1].time * 360 / 180 * Math.PI;
      revolvingCylinder.rotation.x += timeDelta / notes[notes.length-1].time * 360 / 180 * Math.PI;
+    
+    
+   
    // rotateCylinder();
   }
 
